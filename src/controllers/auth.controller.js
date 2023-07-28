@@ -32,10 +32,16 @@ const forgotPassword = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send(success({}, "Password recover link sent to the email"));
 });
 
+const resetPassword = catchAsync(async (req, res) => {
+  await authService.resetPassword(req.body);
+  res.status(httpStatus.OK).send(success({}, "Password reset successfully"));
+});
+
 module.exports = {
   register,
   login,
   logout,
   refreshTokens,
   forgotPassword,
+  resetPassword,
 };

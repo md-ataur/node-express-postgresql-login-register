@@ -59,6 +59,15 @@ const createUser = async (userBody) => {
 };
 
 /**
+ * Get user by id
+ * @param {ObjectId} id
+ * @returns {Promise<User>}
+ */
+const getUserById = async (id) => {
+  return User.findOne({ where: { id } });
+};
+
+/**
  * Get user by email
  * @param {string} email
  * @returns {Promise<User>}
@@ -69,5 +78,6 @@ const getUserByEmail = async (email) => {
 
 module.exports = {
   createUser,
+  getUserById,
   getUserByEmail,
 };

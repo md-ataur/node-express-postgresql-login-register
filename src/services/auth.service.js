@@ -1,5 +1,5 @@
 const httpStatus = require("http-status");
-const { compareSync } = require("bcryptjs");
+const { compareSync, genSaltSync, hashSync } = require("bcryptjs");
 const tokenService = require("./token.service");
 const userService = require("./user.service");
 const { AuthToken } = require("../models");
@@ -15,12 +15,7 @@ const ApiError = require("../utils/ApiError");
  */
 const loginUserWithEmailAndPassword = async (email, password) => {
   try {
-    const user = await User.findOne({
-      where: {
-        email,
-      },
-    });
-
+    const user = await userService.getUserByEmail(email);
     if (!user) throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password");
     const pass = compareSync(password, user.dataValues.password);
 
@@ -41,11 +36,11 @@ const loginUserWithEmailAndPassword = async (email, password) => {
  */
 const logout = async (refreshToken) => {
   try {
-    const refreshTokenDoc = await AuthToken.findOne({ where: { refresh_token: refreshToken } });
+    const refreshTokenDoc = await AuthToken.findOne({ where: { token: refreshToken } });
     if (!refreshTokenDoc) {
       throw new ApiError(httpStatus.NOT_FOUND, "Please authenticate. Token Error");
     }
-    return await AuthToken.destroy({ where: { refresh_token: refreshToken } });
+    return await AuthToken.destroy({ where: { token: refreshToken } });
   } catch (err) {
     throw new ApiError(httpStatus.NOT_FOUND, "Logout Error");
   }
@@ -59,11 +54,7 @@ const logout = async (refreshToken) => {
 const refreshAuth = async (refreshToken) => {
   try {
     const refreshTokenDoc = await tokenService.verifyToken(refreshToken, tokenTypes.REFRESH);
-    const user = await User.findOne({
-      where: {
-        id: refreshTokenDoc.userId,
-      },
-    });
+    const user = await userService.getUserById(refreshTokenDoc.userId);
     if (!user) {
       throw new Error("Please authenticate. Token Error");
     }
@@ -79,22 +70,24 @@ const refreshAuth = async (refreshToken) => {
  * @param {string} newPassword
  * @returns {Promise}
  */
-/* const resetPassword = async (resetPasswordToken, newPassword) => {
+const resetPassword = async (body) => {
   try {
-    const resetPasswordTokenDoc = await tokenService.verifyToken(
-      resetPasswordToken,
-      tokenTypes.RESET_PASSWORD
-    );
-    const user = await userService.getUserById(resetPasswordTokenDoc.user);
+    const resetPasswordTokenDoc = await tokenService.verifyToken(body.token, tokenTypes.RESET_PASSWORD);
+    const user = await userService.getUserById(resetPasswordTokenDoc?.dataValues.userId);
     if (!user) {
-      throw new Error();
+      throw new Error("User not found to reset password");
     }
-    await userService.updateUserById(user.id, { password: newPassword });
-    await AuthToken.deleteMany({ user: user.id, type: tokenTypes.RESET_PASSWORD });
+    if (body.password === body.confirmPassword) {
+      const salt = genSaltSync(10);
+      const pass = hashSync(body.password, salt);
+      const newPass = await User.update({ password: pass }, { where: { id: user.dataValues.id } });
+      await AuthToken.destroy({ where: { userId: user.dataValues.id } });
+      return newPass;
+    }
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Password reset failed");
   }
-}; */
+};
 
 /**
  * Verify email
@@ -122,6 +115,6 @@ module.exports = {
   loginUserWithEmailAndPassword,
   logout,
   refreshAuth,
-  // resetPassword,
+  resetPassword,
   // verifyEmail,
 };

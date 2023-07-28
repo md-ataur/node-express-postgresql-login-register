@@ -61,10 +61,7 @@ const saveToken = async (token, userId, expire, type) => {
  */
 const verifyToken = async (token, type) => {
   const payload = jwt.verify(token, config.jwt.secret);
-  const tokenDoc = await AuthToken.findOne({
-    where: { refresh_token: token, userId: payload.sub },
-  });
-
+  const tokenDoc = await AuthToken.findOne({ where: { token, type, userId: payload.sub } });
   if (!tokenDoc) {
     throw new Error("Token not found");
   }
