@@ -47,6 +47,25 @@ const resetPassword = {
   }),
 };
 
+const verifyEmail = {
+  query: Joi.object().keys({
+    token: Joi.string().required(),
+  }),
+};
+
+const checkEmail = {
+  body: Joi.object().keys({
+    email: Joi.string().email().required(),
+  }),
+};
+
+const otpSize = {
+  body: Joi.object().keys({
+    email: Joi.string().email().required(),
+    otp: Joi.number().required().ruleset.min(99999).max(1000000).rule({ message: "OTP Must be 6 digits" }),
+  }),
+};
+
 module.exports = {
   register,
   login,
@@ -54,4 +73,7 @@ module.exports = {
   refreshTokens,
   forgotPassword,
   resetPassword,
+  verifyEmail,
+  checkEmail,
+  otpSize,
 };

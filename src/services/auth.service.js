@@ -2,8 +2,7 @@ const httpStatus = require("http-status");
 const { compareSync, genSaltSync, hashSync } = require("bcryptjs");
 const tokenService = require("./token.service");
 const userService = require("./user.service");
-const { AuthToken } = require("../models");
-const { User } = require("../models");
+const { User, AuthToken, OtpAuth } = require("../models");
 const { tokenTypes } = require("../config/tokens");
 const ApiError = require("../utils/ApiError");
 
@@ -18,14 +17,12 @@ const loginUserWithEmailAndPassword = async (email, password) => {
     const user = await userService.getUserByEmail(email);
     if (!user) throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password");
     const pass = compareSync(password, user.dataValues.password);
-
     if (pass) {
       await User.update({ last_login: new Date() }, { where: { id: user.dataValues.id } });
       return user;
     }
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password");
-  } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, error.message);
+  } catch (err) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, err.message);
   }
 };
 
@@ -55,28 +52,25 @@ const refreshAuth = async (refreshToken) => {
   try {
     const refreshTokenDoc = await tokenService.verifyToken(refreshToken, tokenTypes.REFRESH);
     const user = await userService.getUserById(refreshTokenDoc.userId);
-    if (!user) {
-      throw new Error("Please authenticate. Token Error");
-    }
+    if (!user) throw new Error("Please authenticate");
     return tokenService.generateAuthTokens(user);
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate");
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Token Error");
   }
 };
 
 /**
  * Reset password
  * @param {string} resetPasswordToken
- * @param {string} newPassword
+ * @param {string} body
  * @returns {Promise}
  */
 const resetPassword = async (body) => {
   try {
     const resetPasswordTokenDoc = await tokenService.verifyToken(body.token, tokenTypes.RESET_PASSWORD);
     const user = await userService.getUserById(resetPasswordTokenDoc?.dataValues.userId);
-    if (!user) {
-      throw new Error("User not found to reset password");
-    }
+    if (!user) throw new Error("User not found to reset password");
+
     if (body.password === body.confirmPassword) {
       const salt = genSaltSync(10);
       const pass = hashSync(body.password, salt);
@@ -94,27 +88,22 @@ const resetPassword = async (body) => {
  * @param {string} verifyEmailToken
  * @returns {Promise}
  */
-/* const verifyEmail = async (verifyEmailToken) => {
+const verifyEmail = async (verifyEmailToken) => {
   try {
-    const verifyEmailTokenDoc = await tokenService.verifyToken(
-      verifyEmailToken,
-      tokenTypes.VERIFY_EMAIL
-    );
-    const user = await userService.getUserById(verifyEmailTokenDoc.user);
-    if (!user) {
-      throw new Error();
-    }
-    await AuthToken.deleteMany({ user: user.id, type: tokenTypes.VERIFY_EMAIL });
-    await userService.updateUserById(user.id, { isEmailVerified: true });
+    const verifyEmailTokenDoc = await tokenService.verifyToken(verifyEmailToken, tokenTypes.VERIFY_EMAIL);
+    const user = await userService.getUserById(verifyEmailTokenDoc.dataValues.userId);
+    if (!user) throw new Error("User not found to verify email");
+    await AuthToken.destroy({ where: { userId: user.dataValues.id, type: tokenTypes.VERIFY_EMAIL } });
+    User.update({ isEmailVerified: true }, { where: { id: user.id } });
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Email verification failed");
   }
-}; */
+};
 
 module.exports = {
   loginUserWithEmailAndPassword,
   logout,
   refreshAuth,
   resetPassword,
-  // verifyEmail,
+  verifyEmail,
 };

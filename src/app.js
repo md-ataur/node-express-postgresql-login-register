@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const passport = require("passport");
+const { jwtStrategy } = require("./config/passport");
 const routes = require("./routes/v1");
 
 const app = express();
@@ -17,6 +19,10 @@ app.use(express.urlencoded({ extended: true }));
 // enable cors
 app.use(cors());
 app.options("*", cors());
+
+// jwt authentication
+app.use(passport.initialize());
+passport.use("jwt", jwtStrategy);
 
 // Getting status of application and version
 app.get("/", (req, res) => {

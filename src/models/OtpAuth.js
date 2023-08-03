@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const DB = require("../config/sequelize.config");
 const User = require("./User");
 
-const AuthToken = DB.define("auth_token", {
+const OtpAuth = DB.define("otp", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -13,14 +13,14 @@ const AuthToken = DB.define("auth_token", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  token: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  type: {
-    type: DataTypes.ENUM,
-    values: ["access", "refresh", "resetPassword", "verifyEmail"],
+  otp: {
+    type: DataTypes.INTEGER,
     allowNull: false,
+  },
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
   },
   expire: {
     type: DataTypes.DATE,
@@ -29,14 +29,14 @@ const AuthToken = DB.define("auth_token", {
   },
 });
 
-AuthToken.belongsTo(User, { foreignKey: "userId" });
+OtpAuth.belongsTo(User, { foreignKey: "userId" });
 
-/* AuthToken.sync({ alter: true })
+/* OtpAuth.sync({ alter: true })
   .then((result) => {
-    console.log("The table for the AuthToken model was just (re)created!");
+    console.log("The table for the OtpAuth model was just (re)created!");
   })
   .then((err) => {
     console.log(err);
   }); */
 
-module.exports = AuthToken;
+module.exports = OtpAuth;

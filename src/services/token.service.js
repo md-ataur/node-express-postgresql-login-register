@@ -38,16 +38,16 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
 const saveToken = async (token, userId, expire, type) => {
   let savedToken;
   try {
-    savedToken = await AuthToken.update({ token, expire, type }, { where: { userId } });
+    savedToken = await AuthToken.update({ token, type, expire }, { where: { userId } });
   } catch (err) {
     throw new ApiError("Error saving token");
   }
   if (savedToken[0] === 0) {
     savedToken = await AuthToken.create({
-      token,
       userId,
-      expire,
+      token,
       type,
+      expire,
     });
   }
   return savedToken;
@@ -114,12 +114,12 @@ const generateResetPasswordToken = async (email) => {
  * @param {User} user
  * @returns {Promise<string>}
  */
-/* const generateVerifyEmailToken = async (user) => {
+const generateVerifyEmailToken = async (user) => {
   const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, "minutes");
   const verifyEmailToken = generateToken(user.id, expires, tokenTypes.VERIFY_EMAIL);
   await saveToken(verifyEmailToken, user.id, expires, tokenTypes.VERIFY_EMAIL);
   return verifyEmailToken;
-}; */
+};
 
 module.exports = {
   generateToken,
@@ -127,5 +127,5 @@ module.exports = {
   verifyToken,
   generateAuthTokens,
   generateResetPasswordToken,
-  // generateVerifyEmailToken,
+  generateVerifyEmailToken,
 };

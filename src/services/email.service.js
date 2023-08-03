@@ -55,9 +55,25 @@ If you did not create an account, then ignore this email.`;
   await sendEmail(to, subject, text);
 };
 
+/**
+ * Send OTP
+ * @param {string} to
+ * @param {string} token
+ * @returns {Promise}
+ */
+const sendVerificationOTP = async (to, otp) => {
+  const subject = "Verify Your OTP";
+  // replace this url with the link to the email verification page of your front-end app
+  const text = `Dear user,
+  Your OTP Number is, ${otp}
+If you did not create an account, then ignore this email.`;
+  await sendEmail(to, subject, text);
+};
+
 module.exports = {
   transport,
   sendEmail,
   sendResetPasswordEmail,
   sendVerificationEmail,
+  sendVerificationOTP,
 };
