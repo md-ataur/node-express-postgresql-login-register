@@ -15,14 +15,18 @@ const ApiError = require("../utils/ApiError");
 const loginUserWithEmailAndPassword = async (email, password) => {
   try {
     const user = await userService.getUserByEmail(email);
-    if (!user) throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password");
+    if (!user) throw new Error("Incorrect email or password");
     const pass = compareSync(password, user.dataValues.password);
     if (pass) {
       await User.update({ last_login: new Date() }, { where: { id: user.dataValues.id } });
       return user;
     }
-  } catch (err) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, err.message);
+    throw new Error("Incorrect email or password");
+  } catch (error) {
+    return {
+      error: true,
+      message: error.message,
+    };
   }
 };
 
@@ -35,11 +39,14 @@ const logout = async (refreshToken) => {
   try {
     const refreshTokenDoc = await AuthToken.findOne({ where: { token: refreshToken } });
     if (!refreshTokenDoc) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Please authenticate. Token Error");
+      throw new Error("Token Error");
     }
     return await AuthToken.destroy({ where: { token: refreshToken } });
-  } catch (err) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Logout Error");
+  } catch (error) {
+    return {
+      error: true,
+      message: error.message,
+    };
   }
 };
 
@@ -55,7 +62,10 @@ const refreshAuth = async (refreshToken) => {
     if (!user) throw new Error("Please authenticate");
     return tokenService.generateAuthTokens(user);
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Token Error");
+    return {
+      error: true,
+      message: error.message,
+    };
   }
 };
 
@@ -79,7 +89,10 @@ const resetPassword = async (body) => {
       return newPass;
     }
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Password reset failed");
+    return {
+      error: true,
+      message: "Password reset failed",
+    };
   }
 };
 

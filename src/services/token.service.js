@@ -40,7 +40,7 @@ const saveToken = async (token, userId, expire, type) => {
   try {
     savedToken = await AuthToken.update({ token, type, expire }, { where: { userId } });
   } catch (err) {
-    throw new ApiError("Error saving token");
+    throw new Error("Error saving token");
   }
   if (savedToken[0] === 0) {
     savedToken = await AuthToken.create({
@@ -99,14 +99,21 @@ const generateAuthTokens = async (user) => {
  * @returns {Promise<string>}
  */
 const generateResetPasswordToken = async (email) => {
-  const user = await userService.getUserByEmail(email);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No users found with this email");
+  try {
+    const user = await userService.getUserByEmail(email);
+    if (!user) {
+      throw new Error("Use not found with this email");
+    }
+    const expires = moment().add(config.jwt.resetPasswordExpirationMinutes, "minutes");
+    const resetPasswordToken = generateToken(user.id, expires, tokenTypes.RESET_PASSWORD);
+    await saveToken(resetPasswordToken, user.id, expires, tokenTypes.RESET_PASSWORD);
+    return resetPasswordToken;
+  } catch (error) {
+    return {
+      error: true,
+      message: error.message,
+    };
   }
-  const expires = moment().add(config.jwt.resetPasswordExpirationMinutes, "minutes");
-  const resetPasswordToken = generateToken(user.id, expires, tokenTypes.RESET_PASSWORD);
-  await saveToken(resetPasswordToken, user.id, expires, tokenTypes.RESET_PASSWORD);
-  return resetPasswordToken;
 };
 
 /**

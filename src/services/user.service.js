@@ -1,60 +1,62 @@
 /* eslint-disable no-param-reassign */
-const httpStatus = require("http-status");
+const httpStatus = require("http-status-codes");
 const bcrypt = require("bcryptjs");
 const { User } = require("../models");
-const ApiError = require("../utils/ApiError");
 
 /**
  * Create a user
- * @param {Object} userBody
+ * @param {Object} body
  * @returns {Promise<User>}
  */
-const createUser = async (userBody) => {
+const createUser = async (body) => {
   try {
     const username = await User.findAll({
       attributes: ["id"],
       where: {
-        userName: userBody.username,
+        userName: body.username,
       },
     });
 
     if (username.length !== 0) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Username already taken");
+      throw new Error("Username already taken");
     }
 
     const phone = await User.findAll({
       attributes: ["id"],
       where: {
-        phone: userBody.phone,
+        phone: body.phone,
       },
     });
 
     if (phone.length !== 0) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
+      throw new Error("Phone already taken");
     }
 
     const userEmail = await User.findAll({
       attributes: ["id"],
       where: {
-        email: userBody.email,
+        email: body.email,
       },
     });
 
     if (userEmail.length === 0) {
       const salt = bcrypt.genSaltSync(10);
-      userBody.password = bcrypt.hashSync(userBody.password, salt);
+      body.password = bcrypt.hashSync(body.password, salt);
       const user = await User.create({
-        email: userBody.email,
-        password: userBody.password,
-        fullName: userBody.name,
-        userName: userBody.username,
-        phone: userBody.phone,
+        fullName: body.name,
+        userName: body.username,
+        email: body.email,
+        password: body.password,
+        phone: body.phone,
       });
       return user;
     }
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
+    throw new Error("Email already taken");
   } catch (error) {
-    throw new ApiError(error.errorCode, error.message);
+    return {
+      error: true,
+      message: error.message,
+    };
   }
 };
 

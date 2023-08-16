@@ -9,10 +9,6 @@ const success = (data, message) => ({
   success: true,
   message,
   data,
-  error: {
-    status: false,
-    message: "No Error",
-  },
 });
 
 /**
@@ -25,9 +21,6 @@ const error = (message) => ({
   success: false,
   message,
   data: {},
-  error: {
-    status: true,
-  },
 });
 
 module.exports = {

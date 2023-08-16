@@ -4,6 +4,7 @@ const helmet = require("helmet");
 const passport = require("passport");
 const { jwtStrategy } = require("./config/passport");
 const routes = require("./routes/v1");
+// const ApiError = require("./utils/ApiError");
 
 const app = express();
 
