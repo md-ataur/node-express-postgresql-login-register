@@ -1,11 +1,10 @@
 /* eslint-disable import/no-extraneous-dependencies */
 const jwt = require("jsonwebtoken");
 const moment = require("moment");
-const httpStatus = require("http-status");
+const httpStatus = require("http-status-codes");
 const config = require("../config/config");
 const userService = require("./user.service");
 const { AuthToken } = require("../models");
-const ApiError = require("../utils/ApiError");
 const { tokenTypes } = require("../config/tokens");
 
 /**
@@ -27,7 +26,7 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
 };
 
 /**
- * Save a token
+ * Save token
  * @param {string} token
  * @param {ObjectId} userId
  * @param {Moment} expires
@@ -54,7 +53,7 @@ const saveToken = async (token, userId, expire, type) => {
 };
 
 /**
- * Verify token and return token doc (or throw an error if it is not valid)
+ * Verify token
  * @param {string} token
  * @param {string} type
  * @returns {Promise<Token>}

@@ -34,7 +34,7 @@ const forgotPassword = catchAsync(async (req, res) => {
   const resetPasswordToken = await tokenService.generateResetPasswordToken(req.body.email);
   if (resetPasswordToken.error) res.status(httpStatus.NOT_FOUND).send(error(resetPasswordToken.message));
   await emailService.sendResetPasswordEmail(req.body.email, resetPasswordToken);
-  res.status(httpStatus.CREATED).send(success({}, "Password recover link sent to the email"));
+  res.status(httpStatus.CREATED).send(success({}, "Password recover link sent to your email"));
 });
 
 const resetPassword = catchAsync(async (req, res) => {
@@ -46,24 +46,27 @@ const resetPassword = catchAsync(async (req, res) => {
 const sendVerificationEmail = catchAsync(async (req, res) => {
   const verifyEmailToken = await tokenService.generateVerifyEmailToken(req.user);
   await emailService.sendVerificationEmail(req.user.email, verifyEmailToken);
-  res.status(httpStatus.OK).send(success({}, "Verification link sent to the email"));
+  res.status(httpStatus.OK).send(success({}, "Verification link sent to your email"));
 });
 
 const verifyEmail = catchAsync(async (req, res) => {
-  await authService.verifyEmail(req.query.token);
+  const response = await authService.verifyEmail(req.query.token);
+  if (response.error) res.status(httpStatus.BAD_REQUEST).send(error(response.message));
   res.status(httpStatus.OK).send(success({}, "Email verified successfully"));
 });
 
 const sendOtpToLogin = catchAsync(async (req, res) => {
   const OTP = Math.floor(100000 + Math.random() * 99999);
-  await otpService.saveOtpToLogin(req.body.email, OTP);
+  const response = await otpService.saveOtpToLogin(req.body.email, OTP);
+  if (response.error) res.status(httpStatus.BAD_REQUEST).send(error(response.message));
   await emailService.sendVerificationOTP(req.body.email, OTP);
   res.status(httpStatus.OK).send(success({}, "OTP sent to your email"));
 });
 
 const verifyOtpToLogin = catchAsync(async (req, res) => {
   const user = await otpService.verifyOtpToLogin(req.body.email, req.body.otp);
-  res.status(httpStatus.OK).send(success({ user }));
+  if (user.error) res.status(httpStatus.BAD_REQUEST).send(error(user.message));
+  res.status(httpStatus.OK).send(success({ user }, "OTP verified"));
 });
 
 module.exports = {

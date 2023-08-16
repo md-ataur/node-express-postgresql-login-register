@@ -1,10 +1,9 @@
-const httpStatus = require("http-status");
+const httpStatus = require("http-status-codes");
 const { compareSync, genSaltSync, hashSync } = require("bcryptjs");
 const tokenService = require("./token.service");
 const userService = require("./user.service");
 const { User, AuthToken, OtpAuth } = require("../models");
 const { tokenTypes } = require("../config/tokens");
-const ApiError = require("../utils/ApiError");
 
 /**
  * Login with username and password
@@ -107,9 +106,12 @@ const verifyEmail = async (verifyEmailToken) => {
     const user = await userService.getUserById(verifyEmailTokenDoc.dataValues.userId);
     if (!user) throw new Error("User not found to verify email");
     await AuthToken.destroy({ where: { userId: user.dataValues.id, type: tokenTypes.VERIFY_EMAIL } });
-    User.update({ isEmailVerified: true }, { where: { id: user.id } });
+    return User.update({ isEmailVerified: true }, { where: { id: user.id } });
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Email verification failed");
+    return {
+      error: true,
+      message: error.message,
+    };
   }
 };
 
